@@ -11,8 +11,8 @@ setup(name='pytest-selenium',
       install_requires=[
           'pytest>=2.7.3',
           'pytest-base-url',
-          'pytest-html>=1.7',
-          'pytest-variables',
+          'pytest-html>=1.14.0',
+          'pytest-variables>=1.5.0',
           'selenium>=3.0.0',
           'requests'],
       entry_points={'pytest11': [

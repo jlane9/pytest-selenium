@@ -5,7 +5,6 @@
 import copy
 from datetime import datetime
 import os
-import sys
 
 import pytest
 from selenium import webdriver
@@ -13,8 +12,6 @@ from selenium.webdriver.support.event_firing_webdriver import \
     EventFiringWebDriver
 
 from . import drivers
-
-PY3 = sys.version_info[0] == 3
 
 SUPPORTED_DRIVERS = [
     'BrowserStack',
@@ -37,27 +34,10 @@ def pytest_addhooks(pluginmanager):
     method(hooks)
 
 
-@pytest.fixture(scope='session', autouse=True)
-def _environment(request, session_capabilities):
-    """Provide additional environment details to pytest-html report"""
-    config = request.config
-    # add environment details to the pytest-html plugin
-    config._environment.append(('Driver', config.option.driver))
-    # add capabilities to environment
-    config._environment.extend([('Capability', '{0}: {1}'.format(
-        k, v)) for k, v in session_capabilities.items()])
-    if config.option.driver == 'Remote':
-        config._environment.append(
-            ('Server', 'http://{0.host}:{0.port}'.format(config.option)))
-
-
 @pytest.fixture(scope='session')
-def session_capabilities(request, variables):
+def session_capabilities(pytestconfig):
     """Returns combined capabilities from pytest-variables and command line"""
-    capabilities = variables.get('capabilities', {})
-    for capability in request.config.getoption('capabilities'):
-        capabilities[capability[0]] = capability[1]
-    return capabilities
+    return pytestconfig._capabilities
 
 
 @pytest.fixture(scope="session")
@@ -125,13 +105,22 @@ def selenium(driver):
     yield driver
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
-    if hasattr(config, 'slaveinput'):
-        return  # xdist slave
+    config._capabilities = config._variables.get('capabilities', {})
+    config._capabilities.update({
+        k: v for k, v in config.getoption('capabilities')})
     config.addinivalue_line(
         'markers', 'capabilities(kwargs): add or change existing '
         'capabilities. specify capabilities as keyword arguments, for example '
         'capabilities(foo=''bar'')')
+    if hasattr(config, '_metadata'):
+        config._metadata['Driver'] = config.getoption('driver')
+        config._metadata['Capabilities'] = config._capabilities
+        if config.option.driver == 'Remote':
+            config._metadata['Server'] = 'http://{0}:{1}'.format(
+                config.getoption('host'),
+                config.getoption('port'))
 
 
 def pytest_report_header(config, startdir):
@@ -199,8 +188,6 @@ def _gather_screenshot(item, report, driver, summary, extra):
 def _gather_html(item, report, driver, summary, extra):
     try:
         html = driver.page_source
-        if not PY3:
-            html = html.encode('utf-8')
     except Exception as e:
         summary.append('WARNING: Failed to gather HTML: {0}'.format(e))
         return
@@ -236,8 +223,6 @@ def format_log(log):
         datetime.utcfromtimestamp(entry['timestamp'] / 1000.0).strftime(
             timestamp_format), entry).rstrip() for entry in log]
     log = '\n'.join(entries)
-    if not PY3:
-        log = log.encode('utf-8')
     return log
 
 
