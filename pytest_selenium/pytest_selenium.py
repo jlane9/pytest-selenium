@@ -52,7 +52,7 @@ def capabilities(request, session_capabilities):
     return capabilities
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def driver_args():
     """Return arguments to pass to the driver service"""
     return None
@@ -95,7 +95,7 @@ def driver_log():
     return os.path.realpath('driver.log')
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def driver_path(request):
     return request.config.getoption('driver_path')
 
