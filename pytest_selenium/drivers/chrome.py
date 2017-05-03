@@ -20,6 +20,6 @@ def driver_kwargs(capabilities, driver_args, driver_log, driver_path,
     return kwargs
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def chrome_options():
     return Options()
