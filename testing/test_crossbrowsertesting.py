@@ -51,12 +51,17 @@ def test_missing_access_key_file(failure, monkeypatch, tmpdir):
     assert 'CrossBrowserTesting key must be set' in failure()
 
 
-def test_invalid_credentials_env(failure, monkeypatch, tmpdir):
+@pytest.mark.parametrize(('username', 'key'),
+                         [('CROSSBROWSERTESTING_USERNAME',
+                           'CROSSBROWSERTESTING_AUTH_KEY'),
+                          ('CROSSBROWSERTESTING_USR',
+                           'CROSSBROWSERTESTING_PSW')])
+def test_invalid_credentials_env(failure, monkeypatch, tmpdir, username, key):
     monkeypatch.setattr(os.path, 'expanduser', lambda p: str(tmpdir))
-    monkeypatch.setenv('CROSSBROWSERTESTING_USERNAME', 'foo')
-    monkeypatch.setenv('CROSSBROWSERTESTING_AUTH_KEY', 'bar')
-    out = failure()
-    messages = ['You are not authorized to view this', 'basic auth failed']
+    monkeypatch.setenv(username, 'foo')
+    monkeypatch.setenv(key, 'bar')
+    out = failure('--capability', 'browser_api_name', 'FF46')
+    messages = ['User not found!', 'basic auth failed']
     assert any(message in out for message in messages)
 
 
@@ -64,6 +69,6 @@ def test_invalid_credentials_file(failure, monkeypatch, tmpdir):
     monkeypatch.setattr(os.path, 'expanduser', lambda p: str(tmpdir))
     config = tmpdir.join('.crossbrowsertesting')
     config.write('[credentials]\nusername=foo\nkey=bar')
-    out = failure()
-    messages = ['You are not authorized to view this', 'basic auth failed']
+    out = failure('--capability', 'browser_api_name', 'FF46')
+    messages = ['User not found!', 'basic auth failed']
     assert any(message in out for message in messages)

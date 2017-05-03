@@ -17,6 +17,7 @@ SUPPORTED_DRIVERS = [
     'BrowserStack',
     'CrossBrowserTesting',
     'Chrome',
+    'Edge',
     'Firefox',
     'Ie',
     'PhantomJS',
@@ -51,20 +52,32 @@ def capabilities(request, session_capabilities):
     return capabilities
 
 
+@pytest.fixture
+def driver_args():
+    """Return arguments to pass to the driver service"""
+    return None
+
+
 @pytest.fixture(scope="session")
-def driver_kwargs(request, capabilities, driver_class, driver_path,
-                  firefox_options, firefox_profile):
+def driver_kwargs(request, capabilities, chrome_options, driver_args,
+                  driver_class, driver_log, driver_path, firefox_options,
+                  firefox_profile, pytestconfig):
     kwargs = {}
-    driver = request.config.getoption('driver').lower()
-    kwargs.update(getattr(drivers, driver).driver_kwargs(
+    driver = getattr(drivers, pytestconfig.getoption('driver').lower())
+    kwargs.update(driver.driver_kwargs(
         capabilities=capabilities,
+        chrome_options=chrome_options,
+        driver_args=driver_args,
+        driver_log=driver_log,
         driver_path=driver_path,
         firefox_options=firefox_options,
         firefox_profile=firefox_profile,
-        host=request.config.getoption('host'),
-        port=request.config.getoption('port'),
+        host=pytestconfig.getoption('host'),
+        port=pytestconfig.getoption('port'),
         request=request,
+        log_path=None,
         test='.'.join(split_class_and_test_names(request.node.nodeid))))
+    pytestconfig._driver_log = driver_log
     return kwargs
 
 
@@ -77,6 +90,12 @@ def driver_class(request):
 
 
 @pytest.fixture(scope="session")
+def driver_log():
+    """Return path to driver log"""
+    return os.path.realpath('driver.log')
+
+
+@pytest.fixture
 def driver_path(request):
     return request.config.getoption('driver_path')
 
@@ -198,6 +217,10 @@ def _gather_html(item, report, driver, summary, extra):
 
 
 def _gather_logs(item, report, driver, summary, extra):
+    pytest_html = item.config.pluginmanager.getplugin('html')
+    if os.path.exists(item.config._driver_log):
+        with open(item.config._driver_log, 'r') as f:
+            extra.append(pytest_html.extras.text(f.read(), 'Driver Log'))
     try:
         types = driver.log_types
     except Exception as e:
@@ -211,7 +234,6 @@ def _gather_logs(item, report, driver, summary, extra):
             summary.append('WARNING: Failed to gather {0} log: {1}'.format(
                 name, e))
             return
-        pytest_html = item.config.pluginmanager.getplugin('html')
         if pytest_html is not None:
             extra.append(pytest_html.extras.text(
                 format_log(log), '%s Log' % name.title()))
@@ -265,3 +287,14 @@ def pytest_addoption(parser):
                      metavar='str',
                      help='selenium eventlistener class, e.g. '
                           'package.module.EventListenerClassName.')
+    group._addoption('--host',
+                     metavar='str',
+                     help='host that the selenium server is listening on, '
+                          'which will default to the cloud provider default '
+                          'or localhost.')
+    group._addoption('--port',
+                     type=int,
+                     metavar='num',
+                     help='port that the selenium server is listening on, '
+                          'which will default to the cloud provider default '
+                          'or localhost.')

@@ -1,6 +1,40 @@
 Release Notes
 =============
 
+**1.10.0 (unreleased)**
+
+* Add alternate credentials environment variables for Jenkins declarative
+  pipelines.
+
+  * Thanks to `@BeyondEvil <https://github.com/BeyondEvil>`_ for the PR
+
+* Deprecate :code:`--firefox-extension`, :code:`--firefox-path`,
+  :code:`--firefox-preference`, and :code:`--firefox-profile` command line
+  options. The preferred way to set these is now through the
+  :code:`firefox_options` fixture.
+
+* Only create a Firefox profile if :code:`--firefox-extension`,
+  :code:`--firefox-preference`, or :code:`--firefox-profile` is specified.
+
+* Add :code:`chrome_options` fixture for configuring Google Chrome.
+
+* Add :code:`driver_args` fixture for adding command line arguments to the
+  driver services. Currently only used by Chrome and PhantomJS.
+
+* Add support for TestingBot local tunnel via :code:`--host` and :code:`--port`
+  command line options.
+
+  * Thanks to `@micheletest <https://github.com/micheletest>`_ for the report
+    and to `@BeyondEvil <https://github.com/BeyondEvil>`_ for the PR
+
+* Add support for Microsoft Edge.
+
+  * Thanks to `@birdsarah <https://github.com/birdsarah>`_ for the PR
+
+* Add driver logs to HTML report.
+
+  * Thanks to `@jrbenny35 <https://github.com/jrbenny35>`_ for the PR
+
 **1.9.1 (2017-03-01)**
 
 * Add capabilities to metadata during :code:`pytest_configure` hook instead of

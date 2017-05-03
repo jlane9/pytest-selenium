@@ -14,7 +14,7 @@ class BrowserStack(Provider):
 
     @property
     def auth(self):
-        return (self.username, self.key)
+        return self.username, self.key
 
     @property
     def executor(self):
@@ -23,11 +23,13 @@ class BrowserStack(Provider):
 
     @property
     def username(self):
-        return self.get_credential('username', 'BROWSERSTACK_USERNAME')
+        return self.get_credential('username', ['BROWSERSTACK_USERNAME',
+                                                'BROWSERSTACK_USR'])
 
     @property
     def key(self):
-        return self.get_credential('key', 'BROWSERSTACK_ACCESS_KEY')
+        return self.get_credential('key', ['BROWSERSTACK_ACCESS_KEY',
+                                           'BROWSERSTACK_PSW'])
 
 
 @pytest.mark.optionalhook

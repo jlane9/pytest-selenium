@@ -20,11 +20,9 @@ Here's a simple example test that opens a website using Selenium:
       selenium.get('http://www.example.com')
 
 To run the above test you will need to specify the browser instance to be
-invoked. For example, to run it using Firefox installed in a default location:
+invoked. For example, to run it using Firefox installed in a default location::
 
-.. code-block:: bash
-
-  $ py.test --driver Firefox
+  pytest --driver Firefox
 
 For full details of the Selenium API you can refer to the
 `documentation <http://seleniumhq.github.io/selenium/docs/api/py/api.html>`_.
@@ -83,11 +81,9 @@ An example using a :ref:`configuration file <configuration-files>`:
   [pytest]
   sensitive_url = example\.com
 
-An example using the command line:
+An example using the command line::
 
-.. code-block:: bash
-
-  $ py.test --sensitive-url "example\.com"
+  pytest --sensitive-url "example\.com"
 
 Specifying a Browser
 ********************
@@ -99,21 +95,17 @@ Firefox
 -------
 
 To run your automated tests with Firefox version 47 or earlier, simply specify
-``Firefox`` as your driver:
+``Firefox`` as your driver::
 
-.. code-block:: bash
-
-  $ py.test --driver Firefox
+  pytest --driver Firefox
 
 For Firefox version 48 onwards, you will need to
 `download GeckoDriver <https://github.com/mozilla/geckodriver/releases>`_ and
 ``selenium`` 3.0 or later. If the driver executable is not available on your
 path, you can use the ``--driver-path`` option to indicate where it can be
-found:
+found::
 
-.. code-block:: bash
-
-  $ py.test --driver Firefox --driver-path /path/to/geckodriver
+  pytest --driver Firefox --driver-path /path/to/geckodriver
 
 See the `GeckoDriver documentation <https://github.com/mozilla/geckodriver>`_
 for more information.
@@ -121,10 +113,22 @@ for more information.
 Configuration
 ~~~~~~~~~~~~~
 
-The current implementation of the Firefox driver does not allow you to specify
-the binary path, preferences, profile path, or extensions via capabilities.
-There are therefore additional command line options for each of these. Check
-``--help`` for further details.
+A ``firefox_options`` fixture is available to configure various options for
+Firefox. The following example demonstrates specifying a binary path,
+preferences, and a command line argument:
+
+.. code-block:: python
+
+  import pytest
+  @pytest.fixture
+  def firefox_options(firefox_options):
+      firefox_options.binary = '/path/to/firefox-bin'
+      firefox_options.add_argument('-foreground')
+      firefox_options.set_preference('browser.anchor_color', '#FF0000')
+      return firefox_options
+
+See the `Firefox options API documentation`_ for full details of what can be
+configured.
 
 Chrome
 ------
@@ -133,14 +137,57 @@ To use Chrome, you will need to
 `download ChromeDriver <https://sites.google.com/a/chromium.org/chromedriver/downloads>`_
 and specify ``Chrome`` for the ``--driver`` command line option. If the driver
 executable is not available on your path, you can use the ``--driver-path``
-option to indicate where it can be found:
+option to indicate where it can be found::
 
-.. code-block:: bash
-
-  $ py.test --driver Chrome --driver-path /path/to/chromedriver
+  pytest --driver Chrome --driver-path /path/to/chromedriver
 
 See the `ChromeDriver documentation <https://sites.google.com/a/chromium.org/chromedriver/>`_
 for more information.
+
+Configuration
+~~~~~~~~~~~~~
+
+A ``chrome_options`` fixture is available to configure various options for
+Chrome. The following example demonstrates specifying a binary path, adding
+an extension, and passing an argument to start Chrome in kiosk mode:
+
+.. code-block:: python
+
+  import pytest
+  @pytest.fixture
+  def chrome_options(chrome_options):
+      chrome_options.binary_location = '/path/to/chrome'
+      chrome_options.add_extension('/path/to/extension.crx')
+      chrome_options.add_argument('--kiosk')
+      return chrome_options
+
+See the `Chrome options API documentation`_ for full details of what can be
+configured.
+
+The ChromeDriver supports various command line arguments. These can be passed
+by implementing a ``driver_args`` fixture and returning a list of the desired
+arguments. The following example specifies the log file path:
+
+.. code-block:: python
+
+  import pytest
+  @pytest.fixture
+  def driver_args():
+      return ['--log-path=chromedriver.log']
+
+For a full list of supported command line arguments, run
+``chromedriver --help`` in your terminal.
+
+Edge
+----
+
+To use Edge, you will need to
+`download Edge WebDriver <https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/tools/webdriver>`_
+and specify ``Edge`` for the ``--driver`` command line option. If the driver
+executable is not available on your path, you can use the ``--driver-path``
+option to indicate where it can be found::
+
+  pytest --driver Edge --driver-path \path\to\MicrosoftWebDriver.exe
 
 Internet Explorer
 -----------------
@@ -149,11 +196,9 @@ To use Internet Explorer, you will need to download and configure the
 `Internet Explorer Driver <https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver>`_
 and specify ``IE`` for the ``--driver`` command line option. If the driver
 executable is not available on your path, you can use the ``--driver-path``
-option to indicate where it can be found:
+option to indicate where it can be found::
 
-.. code-block:: batch
-
-  > py.test --driver IE --driver-path \path\to\IEDriverServer.exe
+  pytest --driver IE --driver-path \path\to\IEDriverServer.exe
 
 PhantomJS
 ---------
@@ -161,14 +206,29 @@ PhantomJS
 To use PhantomJS, you will need `download it <http://phantomjs.org/download.html>`_
 and specify ``PhantomJS`` for the ``--driver`` command line option. If
 the driver executable is not available on your path, you can use the
-``--driver-path`` option to indicate where it can be found:
+``--driver-path`` option to indicate where it can be found::
 
-.. code-block:: bash
-
-  $ py.test --driver PhantomJS --driver-path /path/to/phantomjs
+  pytest --driver PhantomJS --driver-path /path/to/phantomjs
 
 See the `PhantomJS documentation <http://phantomjs.org/quick-start.html>`_ for
 more information.
+
+Configuration
+~~~~~~~~~~~~~
+
+PhantomJS supports various command line arguments. These can be passed by
+implementing a ``driver_args`` fixture and returning a list of the desired
+arguments. The following example specifies the log file path:
+
+.. code-block:: python
+
+  import pytest
+  @pytest.fixture
+  def driver_args():
+      return ['--webdriver-logfile=phantomjs.log']
+
+For a full list of supported command line arguments, run ``phantomjs --help``
+in your terminal.
 
 Safari
 ------
@@ -176,11 +236,9 @@ Safari
 To use Safari, you will need to have at least Safari 10 running on OS X El
 Capitan or later, and ``selenium`` 3.0 or later. Once you have these
 prerequisites, simply specify ``Safari`` for the ``--driver`` command line
-option.
+option::
 
-.. code-block:: bash
-
-  $ py.test --driver Safari
+  pytest --driver Safari
 
 Selenium Server/Grid
 --------------------
@@ -199,19 +257,15 @@ selection is determined using capabilities. Check the
 for details of accepted values. There are also a number of
 `browser specific capabilities <https://github.com/SeleniumHQ/selenium/wiki/DesiredCapabilities#browser-specific-capabilities>`_
 that can be set. Be sure to also check the documentation for your chosen
-driver, as the accepted capabilities may differ:
+driver, as the accepted capabilities may differ::
 
-.. code-block:: bash
-
-  $ py.test --driver Remote --capability browserName firefox
+  pytest --driver Remote --capability browserName firefox
 
 Note that if your server is not running locally or is running on an alternate
 port you will need to specify the ``--host`` and ``--port`` command line
-options:
+options::
 
-.. code-block:: bash
-
-  $ py.test --driver Remote --host selenium.hostname --port 5555 --capability browserName firefox
+  pytest --driver Remote --host selenium.hostname --port 5555 --capability browserName firefox
 
 Sauce Labs
 ----------
@@ -221,6 +275,17 @@ must provide a valid username and API key. This can be done either by using
 a ``.saucelabs`` configuration file in the working directory or your home
 directory, or by setting the ``SAUCELABS_USERNAME`` and ``SAUCELABS_API_KEY``
 environment variables.
+
+Alternatively, when using `Jenkins CI`_ declarative pipelines,
+credentials can be set as environment variables as follows:
+
+.. code-block:: groovy
+
+  environment {
+    SAUCELABS = credentials('SAUCELABS')
+  }
+
+For more information, see `using environment variables in Jenkins pipelines`_.
 
 Configuration
 ~~~~~~~~~~~~~
@@ -236,11 +301,9 @@ Below is an example ``.saucelabs`` configuration file:
 Running tests
 ~~~~~~~~~~~~~
 
-To run your automated tests, simply specify ``SauceLabs`` as your driver:
+To run your automated tests, simply specify ``SauceLabs`` as your driver::
 
-.. code-block:: bash
-
-  $ py.test --driver SauceLabs --capability browserName Firefox
+  pytest --driver SauceLabs --capability browserName Firefox
 
 See the `supported platforms <https://docs.saucelabs.com/reference/platforms-configurator/>`_
 to help you with your configuration. Additional capabilities can be set using
@@ -258,6 +321,17 @@ a ``.browserstack`` configuration file in the working directory or your home
 directory, or by setting the ``BROWSERSTACK_USERNAME`` and
 ``BROWSERSTACK_ACCESS_KEY`` environment variables.
 
+Alternatively, when using `Jenkins CI`_ declarative pipelines,
+credentials can be set as environment variables as follows:
+
+.. code-block:: groovy
+
+  environment {
+    BROWSERSTACK = credentials('BROWSERSTACK')
+  }
+
+For more information, see `using environment variables in Jenkins pipelines`_.
+
 Configuration
 ~~~~~~~~~~~~~
 
@@ -272,11 +346,9 @@ Below is an example ``.browserstack`` configuration file:
 Running tests
 ~~~~~~~~~~~~~
 
-To run your automated tests, simply specify ``BrowserStack`` as your driver:
+To run your automated tests, simply specify ``BrowserStack`` as your driver::
 
-.. code-block:: bash
-
-  $ py.test --driver BrowserStack --capability browserName Firefox
+  pytest --driver BrowserStack --capability browserName Firefox
 
 See the
 `capabilities documentation <https://www.browserstack.com/automate/capabilities>`_
@@ -292,6 +364,19 @@ a ``.testingbot`` configuration file in the working directory or your home
 directory, or by setting the ``TESTINGBOT_KEY`` and ``TESTINGBOT_SECRET``
 environment variables.
 
+Alternatively, when using `Jenkins CI`_ declarative pipelines,
+credentials can be set as environment variables as follows:
+
+.. code-block:: groovy
+
+  environment {
+    TESTINGBOT = credentials('TESTINGBOT')
+  }
+
+Note that for TestingBot, ``username`` corresponds to ``key`` and ``password`` to ``secret``.
+
+For more information, see `using environment variables in Jenkins pipelines`_.
+
 Configuration
 ~~~~~~~~~~~~~
 
@@ -306,17 +391,21 @@ Below is an example ``.testingbot`` configuration file:
 Running tests
 ~~~~~~~~~~~~~
 
-To run your automated tests, simply specify ``TestingBot`` as your driver:
+To run your automated tests, simply specify ``TestingBot`` as your driver::
 
-.. code-block:: bash
-
-  $ py.test --driver TestingBot --capability browserName firefox --capability version 39 --capability platform WIN8
+  pytest --driver TestingBot --capability browserName firefox --capability version 39 --capability platform WIN8
 
 See the `list of available browsers <http://testingbot.com/support/getting-started/browsers.html>`_
 to help you with your configuration. Additional capabilities can be set using
 the ``--capability`` command line arguments. See the
 `test options <http://testingbot.com/support/other/test-options>`_
 for full details of what can be configured.
+
+Local tunnel
+~~~~~~~~~~~~
+
+To run the tests using `TestingBot's local tunnel <https://testingbot.com/support/other/tunnel>`_
+you'll also need to set the ``--host`` and ``--port`` command line arguments.
 
 CrossBrowserTesting
 -------------------
@@ -327,6 +416,17 @@ valid username and auth key. This can be done either by using
 a ``.crossbrowsertesting`` configuration file in the working directory or your
 home directory, or by setting the ``CROSSBROWSERTESTING_USERNAME`` and
 ``CROSSBROWSERTESTING_AUTH_KEY`` environment variables.
+
+Alternatively, when using `Jenkins CI`_ declarative pipelines,
+credentials can be set as environment variables as follows:
+
+.. code-block:: groovy
+
+  environment {
+    CROSSBROWSERTESTING = credentials('CROSSBROWSERTESTING')
+  }
+
+For more information, see `using environment variables in Jenkins pipelines`_.
 
 Configuration
 ~~~~~~~~~~~~~
@@ -343,11 +443,9 @@ Running tests
 ~~~~~~~~~~~~~
 
 To run your automated tests, simply specify ``CrossBrowserTesting`` as your
-driver:
+driver::
 
-.. code-block:: bash
-
-  $ py.test --driver CrossBrowserTesting --capability os_api_name Win10 --capability browser_api_name FF46
+  pytest --driver CrossBrowserTesting --capability os_api_name Win10 --capability browser_api_name FF46
 
 Additional capabilities can be set using the ``--capability`` command line
 arguments. See the
@@ -364,11 +462,9 @@ can also be used to configure local drivers.
 Command Line Capabilities
 -------------------------
 
-Simple capabilities can be set or overridden on the command line:
+Simple capabilities can be set or overridden on the command line::
 
-.. code-block:: bash
-
-  $ py.test --driver Remote --capability browserName Firefox
+  pytest --driver Remote --capability browserName Firefox
 
 Capabilities Files
 ------------------
@@ -483,3 +579,8 @@ or set the ``SELENIUM_EXCLUDE_DEBUG`` environment variable to a list of the
 
 For example, to exclude HTML, logs, and screenshots from the report, you could
 set ``SELENIUM_EXCLUDE_DEBUG`` to ``html:logs:screenshot``.
+
+.. _Jenkins CI: https://jenkins.io/
+.. _using environment variables in Jenkins pipelines: https://jenkins.io/doc/pipeline/tour/environment/
+.. _Firefox options API documentation: https://seleniumhq.github.io/selenium/docs/api/py/webdriver_firefox/selenium.webdriver.firefox.options.html
+.. _Chrome options API documentation: https://seleniumhq.github.io/selenium/docs/api/py/webdriver_chrome/selenium.webdriver.chrome.options.html
