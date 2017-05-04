@@ -154,7 +154,8 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
     summary = []
     extra = getattr(report, 'extra', [])
-    driver = getattr(item, '_driver', None)
+    funcargs = getattr(item, 'funcargs', None)
+    driver = funcargs.get('selenium', None)
     xfail = hasattr(report, 'wasxfail')
     failure = (report.skipped and xfail) or (report.failed and not xfail)
     when = item.config.getini('selenium_capture_debug').lower()
